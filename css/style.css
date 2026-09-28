@@ -1,0 +1,928 @@
+/* ==========================================================================
+   XOR Stream Cipher & One-Time Pad — Stylesheet
+   Konsep Desain: "Moonlit terminal behind amber glass"
+   ========================================================================== */
+
+/* --- 1. Design Tokens & CSS Variables --- */
+:root {
+  /* Neutrals hangat (Warm Neutrals) */
+  --color-warm-off-white: #faf9f6;  /* Teks utama, background tombol utama */
+  --color-pale-stone:     #b4b4b2;  /* Teks tersier, label ghost, deskripsi */
+  --color-bone-gray:      #868684;  /* Teks sekunder, caption, bit '0' */
+  --color-faint-linen:    #e3e2e0;  /* Hover tombol utama, outline terpilih */
+  --color-slate-hearth:   #40403f;  /* Modal / floating / hover sekunder */
+  --color-iron-veil:      #383838;  /* Hover/kontrol, hairline border, chrome bar */
+  --color-smoke-charcoal: #2f2f2f;  /* Kartu, panel terminal */
+  --color-smoked-onyx:    #1e1e1d;  /* Footer, band section, latar input */
+  --color-deep-ember:     #121212;  /* Kanvas halaman utama */
+  --color-ink-black:      #080808;  /* Nuansa ekstra gelap */
+  --color-absolute:       #000000;  /* Navbar, banner */
+
+  /* Aksen: HANYA di dalam konteks terminal/kode + heading section */
+  --color-gold-leaf:      #bd9f65;  /* Bit '1', hex penting, string output */
+  --color-muted-cobalt:   #6f839f;  /* Section headings, identifier kode */
+
+  /* Warna status fungsional (ikon / teks status / border-kiri alert) */
+  --color-status-pass:    #7ba564;
+  --color-status-error:   #ff5f57;
+  --color-status-warn:    #febc20;
+
+  /* Surface */
+  --surface-canvas:   #121212;
+  --surface-band:     #1e1e1d;
+  --surface-card:     #2f2f2f;
+  --surface-elevated: #383838;
+  --surface-floating: #40403f;
+
+  /* Tipografi */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Radius */
+  --radius-button: 4px;
+  --radius-nav: 4px;
+  --radius-card: 8px;
+  --radius-image: 20px;
+
+  /* Spasi (kelipatan 2 dan 10) */
+  --space-4: 4px;   --space-8: 8px;   --space-10: 10px;  --space-12: 12px;
+  --space-16: 16px; --space-20: 20px; --space-24: 24px; --space-32: 32px;
+  --space-40: 40px; --space-64: 64px;
+
+  /* Layout */
+  --page-max: 1200px;
+  --section-gap: clamp(80px, 10vw, 120px);
+  --card-padding: 24px;
+
+  /* Glow: HANYA untuk mockup terminal hero */
+  --shadow-glow: 0 0 32px 10px rgba(33, 126, 255, 0.5);
+}
+
+/* --- 2. CSS Reset & Base Styles --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.38;
+  background-color: var(--surface-canvas);
+  color: var(--color-warm-off-white);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--surface-canvas);
+  color: var(--color-warm-off-white);
+  overflow-x: hidden;
+  font-feature-settings: "tnum" on;
+}
+
+/* Fallback jika font Geist Mono belum termuat */
+code, kbd, samp, pre, .mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" on;
+}
+
+/* Link reset */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* --- 3. Tipografi Standar --- */
+.eyebrow {
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--color-pale-stone);
+  font-weight: 500;
+  display: inline-block;
+  margin-bottom: var(--space-8);
+}
+
+.heading-lg {
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -1.44px;
+  color: var(--color-muted-cobalt);
+  font-weight: 500;
+  margin-bottom: var(--space-12);
+}
+
+.heading-sm {
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.48px;
+  color: var(--color-warm-off-white);
+  font-weight: 500;
+}
+
+.section-desc {
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--color-pale-stone);
+  max-width: 65ch;
+  margin-bottom: var(--space-32);
+}
+
+/* --- 4. Container & Layout --- */
+.container {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-20);
+  padding-right: var(--space-20);
+}
+
+.section-padding {
+  padding-top: var(--section-gap);
+  padding-bottom: var(--section-gap);
+}
+
+.band-alt {
+  background-color: var(--surface-band);
+  border-top: 1px solid var(--color-iron-veil);
+  border-bottom: 1px solid var(--color-iron-veil);
+}
+
+/* --- 5. Announcement Banner & Sticky Navbar --- */
+.announcement-banner {
+  background-color: var(--color-absolute);
+  border-bottom: 1px solid var(--color-smoke-charcoal);
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-warm-off-white);
+  letter-spacing: 0.2px;
+}
+
+.announcement-banner span.group-tag {
+  color: var(--color-gold-leaf);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-iron-veil);
+  height: 56px;
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.nav-brand {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--color-warm-off-white);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.nav-brand-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background-color: var(--color-smoke-charcoal);
+  color: var(--color-gold-leaf);
+  border-radius: var(--radius-button);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-24);
+  list-style: none;
+}
+
+.nav-link {
+  font-size: 14px;
+  color: var(--color-pale-stone);
+  transition: color 0.15s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--color-warm-off-white);
+}
+
+.nav-cta {
+  display: flex;
+  align-items: center;
+}
+
+/* --- 6. Hero Section --- */
+.hero-section {
+  position: relative;
+  padding-top: clamp(60px, 8vw, 100px);
+  padding-bottom: clamp(60px, 8vw, 100px);
+  background: radial-gradient(circle at 60% 30%, #1e1e1d 0%, #121212 70%);
+  border-bottom: 1px solid var(--color-iron-veil);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-40);
+  align-items: center;
+}
+
+.hero-content {
+  max-width: 520px;
+}
+
+.hero-title {
+  font-size: clamp(40px, 6vw, 68px);
+  line-height: 1.0;
+  letter-spacing: -2.04px;
+  font-weight: 500;
+  color: var(--color-warm-off-white);
+  margin-bottom: var(--space-20);
+}
+
+.hero-sub {
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--color-pale-stone);
+  margin-bottom: var(--space-32);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  margin-bottom: var(--space-32);
+}
+
+.hero-cli-prompt {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-status-pass);
+  background-color: var(--surface-band);
+  padding: 8px 14px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-iron-veil);
+  display: inline-block;
+}
+
+.hero-cli-prompt .cli-dim {
+  color: var(--color-bone-gray);
+}
+
+/* Hero Terminal Mockup (Satu-satunya dengan --shadow-glow) */
+.hero-terminal-mockup {
+  box-shadow: var(--shadow-glow);
+  border-radius: var(--radius-card);
+}
+
+/* --- 7. Komponen Tombol --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 10px 16px;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  text-decoration: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-warm-off-white);
+  outline-offset: 2px;
+}
+
+/* Tombol Utama (Filled) */
+.btn-primary {
+  background-color: var(--color-warm-off-white);
+  color: var(--color-deep-ember);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-faint-linen);
+}
+
+/* Tombol Sekunder */
+.btn-secondary {
+  background-color: var(--color-iron-veil);
+  color: var(--color-warm-off-white);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-slate-hearth);
+}
+
+/* Tombol Ghost */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-warm-off-white);
+  padding: 10px 14px;
+}
+
+.btn-ghost:hover {
+  color: var(--color-pale-stone);
+}
+
+/* Ukuran Tombol Kecil */
+.btn-sm {
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+/* --- 8. Terminal Panels (Wadah Utama Tiap Komponen) --- */
+.terminal-panel {
+  background-color: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-iron-veil);
+  overflow: hidden;
+}
+
+.terminal-header {
+  height: 34px;
+  background-color: var(--color-iron-veil);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--color-smoke-charcoal);
+}
+
+.terminal-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-red { background-color: var(--color-status-error); }
+.dot-yellow { background-color: var(--color-status-warn); }
+.dot-green { background-color: #28c840; }
+
+.terminal-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-pale-stone);
+  letter-spacing: 0.3px;
+}
+
+.terminal-body {
+  padding: var(--card-padding);
+}
+
+/* --- 9. Form Controls (Input, Textarea, Toggle) --- */
+.form-group {
+  margin-bottom: var(--space-20);
+}
+
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.form-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-pale-stone);
+  font-weight: 500;
+}
+
+.form-hint {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-bone-gray);
+}
+
+.form-input, .form-textarea {
+  width: 100%;
+  background-color: var(--surface-band);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--color-warm-off-white);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-input:focus, .form-textarea:focus {
+  border-color: var(--color-pale-stone);
+  outline: 1px solid var(--color-warm-off-white);
+}
+
+.form-input.is-invalid, .form-textarea.is-invalid {
+  border-color: var(--color-status-error);
+}
+
+.input-with-action {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.input-with-action .form-input {
+  flex: 1;
+}
+
+/* Segmented Toggle */
+.segmented-toggle {
+  display: inline-flex;
+  background-color: var(--surface-band);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: 3px;
+  gap: 3px;
+}
+
+.toggle-option {
+  border: none;
+  background: transparent;
+  color: var(--color-pale-stone);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.toggle-option.active {
+  background-color: var(--color-iron-veil);
+  color: var(--color-warm-off-white);
+}
+
+/* Hasil Output Box */
+.output-card {
+  background-color: var(--surface-band);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: var(--space-16);
+  margin-top: var(--space-20);
+  position: relative;
+}
+
+.output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-10);
+}
+
+.output-val {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--color-gold-leaf);
+  word-break: break-all;
+  line-height: 1.5;
+  user-select: all;
+}
+
+.output-metrics {
+  display: flex;
+  gap: var(--space-16);
+  margin-top: var(--space-12);
+  padding-top: var(--space-10);
+  border-top: 1px solid var(--color-iron-veil);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-bone-gray);
+}
+
+.metric-item span {
+  color: var(--color-warm-off-white);
+}
+
+/* Alert Boxes (Error / Warning) */
+.alert-box {
+  background-color: var(--surface-band);
+  border-left: 2px solid var(--color-status-error);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-button) var(--radius-button) 0;
+  margin-top: var(--space-12);
+  font-size: 14px;
+  color: var(--color-warm-off-white);
+  line-height: 1.4;
+}
+
+.alert-box.alert-warn {
+  border-left-color: var(--color-status-warn);
+}
+
+.alert-box.hidden {
+  display: none;
+}
+
+/* Grid Layout Enkripsi & Dekripsi */
+.cipher-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-32);
+}
+
+/* --- 10. Bagian Visualisasi --- */
+.flow-diagram-container {
+  background-color: var(--surface-band);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: var(--space-20);
+  margin-bottom: var(--space-24);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-warm-off-white);
+  overflow-x: auto;
+}
+
+.flow-diagram-container .accent {
+  color: var(--color-gold-leaf);
+}
+
+.flow-diagram-container .tag {
+  color: var(--color-muted-cobalt);
+}
+
+.vis-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-16);
+  flex-wrap: wrap;
+  gap: var(--space-10);
+}
+
+.vis-btn-group {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.table-scroll-container {
+  max-height: 480px;
+  overflow-y: auto;
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: left;
+}
+
+.data-table th {
+  background-color: var(--surface-band);
+  padding: 10px 12px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-bone-gray);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--color-iron-veil);
+}
+
+.data-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-iron-veil);
+  color: var(--color-warm-off-white);
+}
+
+.data-table tr.step-row {
+  transition: opacity 0.3s ease, background-color 0.3s ease;
+}
+
+.data-table tr.step-highlight {
+  background-color: rgba(189, 159, 101, 0.08);
+}
+
+/* Pewarnaan Bit Biner */
+.bit-1 {
+  color: var(--color-gold-leaf);
+  font-weight: 600;
+}
+
+.bit-0 {
+  color: var(--color-bone-gray);
+}
+
+/* Panel "Kenapa XOR Bisa Dibalik?" */
+.math-truth-panel {
+  background-color: var(--surface-band);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: var(--space-20);
+  margin-top: var(--space-24);
+}
+
+.math-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24);
+  margin-top: var(--space-12);
+}
+
+.math-box {
+  background-color: var(--surface-card);
+  padding: var(--space-16);
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-iron-veil);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.math-box h4 {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--color-pale-stone);
+  margin-bottom: var(--space-10);
+}
+
+/* --- 11. Bagian Test Cases --- */
+.test-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-16);
+}
+
+.test-badge-score {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--color-status-pass);
+  background-color: var(--surface-band);
+  padding: 6px 12px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-iron-veil);
+}
+
+.test-flow-banner {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-pale-stone);
+  background-color: var(--surface-band);
+  padding: 8px 14px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-iron-veil);
+  margin-bottom: var(--space-16);
+  word-break: break-all;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.status-pass {
+  color: var(--color-status-pass);
+}
+
+.status-fail {
+  color: var(--color-status-error);
+}
+
+/* --- 12. Bagian Serangan Key Reuse --- */
+.attack-step-card {
+  background-color: var(--surface-band);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+.attack-step-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-muted-cobalt);
+  margin-bottom: var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.attack-verification-box {
+  background-color: rgba(123, 165, 100, 0.1);
+  border: 1px solid var(--color-status-pass);
+  padding: 12px 16px;
+  border-radius: var(--radius-button);
+  margin: var(--space-16) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.byte-zero-highlight {
+  background-color: rgba(255, 95, 87, 0.2);
+  color: var(--color-status-error);
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.crib-drag-section {
+  background-color: var(--surface-band);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: var(--space-20);
+  margin-top: var(--space-24);
+}
+
+.crib-result-row.printable {
+  background-color: rgba(189, 159, 101, 0.08);
+}
+
+/* --- 13. Bagian Syarat OTP & Checker --- */
+.otp-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  margin-bottom: var(--space-32);
+}
+
+.otp-item {
+  display: flex;
+  gap: var(--space-16);
+  background-color: var(--surface-card);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-button);
+  padding: var(--space-16) var(--space-20);
+}
+
+.otp-icon {
+  width: 24px;
+  height: 24px;
+  stroke: var(--color-warm-off-white);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.otp-item-content h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-warm-off-white);
+  margin-bottom: var(--space-4);
+}
+
+.otp-item-content p {
+  font-size: 14px;
+  color: var(--color-pale-stone);
+}
+
+.otp-checker-panel {
+  background-color: var(--surface-card);
+  border: 1px solid var(--color-iron-veil);
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+}
+
+.checker-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: var(--space-16);
+}
+
+.checker-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-bone-gray);
+  border-bottom: 1px solid var(--color-iron-veil);
+}
+
+.checker-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-iron-veil);
+}
+
+/* --- 14. Footer --- */
+.site-footer {
+  background-color: var(--surface-band);
+  border-top: 1px solid var(--color-iron-veil);
+  padding: var(--space-40) 0;
+  font-size: 14px;
+  color: var(--color-pale-stone);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-32);
+  margin-bottom: var(--space-32);
+}
+
+.footer-col h4 {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-bone-gray);
+  margin-bottom: var(--space-12);
+}
+
+.footer-col p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-pale-stone);
+}
+
+.footer-disclaimer {
+  padding-top: var(--space-20);
+  border-top: 1px solid var(--color-iron-veil);
+  font-size: 12px;
+  color: var(--color-bone-gray);
+  text-align: center;
+}
+
+/* --- 15. Responsive & Accessibility --- */
+@media (max-width: 960px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-content {
+    max-width: 100%;
+  }
+  .cipher-grid {
+    grid-template-columns: 1fr;
+  }
+  .math-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .nav-links {
+    display: none; /* di mobile navigasi disederhanakan */
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn {
+    width: 100%;
+  }
+  .output-metrics {
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

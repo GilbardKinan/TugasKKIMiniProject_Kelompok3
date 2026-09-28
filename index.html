@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XOR Stream Cipher & One-Time Pad — Aplikasi Interaktif Kriptografi</title>
+  <meta name="description" content="Aplikasi web interaktif untuk mempelajari XOR Stream Cipher dan One-Time Pad, visualisasi bitwise XOR, demo serangan Two-Time Pad, dan pengujian otomatis.">
+  
+  <!-- Google Fonts: Inter & Geist Mono dengan Fallback Stack -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Script Defer (Urutan Wajib: cipher -> attack -> tests -> ui) -->
+  <script defer src="js/cipher.js"></script>
+  <script defer src="js/attack.js"></script>
+  <script defer src="js/tests.js"></script>
+  <script defer src="js/ui.js"></script>
+</head>
+<body>
+
+  <!-- 1. Announcement Banner -->
+  <aside class="announcement-banner" aria-label="Pengumuman Proyek">
+    Proyek Mini Kriptografi · XOR Stream Cipher &amp; One-Time Pad · <span class="group-tag">[KELOMPOK KRIPTOGRAFI]</span>
+  </aside>
+
+  <!-- 2. Sticky Top Navigation -->
+  <header class="navbar" role="banner">
+    <div class="container nav-container">
+      <a href="#" class="nav-brand" aria-label="Beranda XOR Cipher">
+        <span>XOR</span>
+        <span class="nav-brand-badge">OTP</span>
+      </a>
+      <nav aria-label="Navigasi Utama">
+        <ul class="nav-links">
+          <li><a href="#enkripsi" class="nav-link">Enkripsi</a></li>
+          <li><a href="#dekripsi" class="nav-link">Dekripsi</a></li>
+          <li><a href="#visualisasi" class="nav-link">Visualisasi</a></li>
+          <li><a href="#tests" class="nav-link">Test Cases</a></li>
+          <li><a href="#serangan" class="nav-link">Serangan</a></li>
+          <li><a href="#otp" class="nav-link">Syarat OTP</a></li>
+        </ul>
+      </nav>
+      <div class="nav-cta">
+        <a href="#tests" class="btn btn-primary btn-sm" id="nav-btn-tests">Jalankan Tes</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- 3. Hero Section -->
+    <section class="hero-section" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <span class="eyebrow">DASAR KRIPTOGRAFI SIMETRIS</span>
+          <h1 id="hero-title" class="hero-title">Enkripsi dengan satu operasi: XOR.</h1>
+          <p class="hero-sub">
+            Pelajari cara kerja stream cipher dan One-Time Pad, lalu lihat sendiri mengapa key tidak boleh dipakai dua kali.
+          </p>
+          <div class="hero-actions">
+            <a href="#enkripsi" class="btn btn-primary">Mulai enkripsi &darr;</a>
+            <a href="#serangan" class="btn btn-ghost">Lihat serangan &rarr;</a>
+          </div>
+          <div>
+            <div class="hero-cli-prompt">
+              $ xor <span class="cli-dim">"HELLO" --key "ABCDE"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mockup Terminal Hero (Satu-satunya elemen berglow biru) -->
+        <div class="hero-terminal-mockup">
+          <div class="terminal-panel">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <span class="terminal-title">xor_demo.sh — 80x24</span>
+              <span></span>
+            </div>
+            <div class="terminal-body mono" style="font-size: 13px; line-height: 1.7;">
+              <p style="color: var(--color-bone-gray);">// Alur Enkripsi Stream Simetris</p>
+              <p><span style="color: var(--color-muted-cobalt);">Plaintext :</span> "HELLO" <span style="color: var(--color-bone-gray);">(48 45 4C 4C 4F)</span></p>
+              <p><span style="color: var(--color-muted-cobalt);">Keystream :</span> "ABCDE" <span style="color: var(--color-bone-gray);">(41 42 43 44 45)</span></p>
+              <p style="color: var(--color-iron-veil);">───────────────────────────────────────</p>
+              <p><span style="color: var(--color-gold-leaf);">C[i] = P[i] &oplus; KS[i]</span></p>
+              <p><span style="color: var(--color-muted-cobalt);">Ciphertext:</span> <span style="color: var(--color-gold-leaf); font-weight: 600;">09 07 0F 08 0A</span></p>
+              <br>
+              <p style="color: var(--color-bone-gray);">// Operasi Pembalikan (Dekripsi)</p>
+              <p><span style="color: var(--color-gold-leaf);">P[i] = C[i] &oplus; KS[i]</span> &rarr; "HELLO" <span style="color: var(--color-status-pass);">&#10003; KEMBALI ASLI</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Bagian Enkripsi & Dekripsi (Side by side on desktop) -->
+    <div class="container section-padding">
+      <div class="cipher-grid">
+        
+        <!-- SECTION ENKRIPSI -->
+        <section id="enkripsi" aria-labelledby="heading-enkripsi">
+          <div class="terminal-panel">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <span class="terminal-title">enkripsi.session</span>
+              <span class="eyebrow" style="margin:0; font-size:10px;">01 · ENKRIPSI</span>
+            </div>
+            <div class="terminal-body">
+              <h2 id="heading-enkripsi" class="heading-sm" style="margin-bottom: var(--space-12);">Enkripsi Pesan</h2>
+              <p style="font-size: 14px; color: var(--color-pale-stone); margin-bottom: var(--space-20);">
+                Ubah teks terbaca menjadi ciphertext heksadesimal dengan operasi XOR per byte.
+              </p>
+
+              <!-- Mode Toggle -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <span class="form-label">Mode Operasi</span>
+                </div>
+                <div class="segmented-toggle" role="radiogroup" aria-label="Mode Operasi Enkripsi">
+                  <button type="button" class="toggle-option active" id="enc-mode-stream" role="radio" aria-checked="true">Stream Cipher</button>
+                  <button type="button" class="toggle-option" id="enc-mode-otp" role="radio" aria-checked="false">One-Time Pad</button>
+                </div>
+              </div>
+
+              <!-- Plaintext Input -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="enc-plaintext" class="form-label">Plaintext (Pesan Asli)</label>
+                  <span class="form-hint" id="enc-plain-counter">5 / 256</span>
+                </div>
+                <textarea id="enc-plaintext" class="form-textarea" placeholder="Masukkan pesan ASCII (contoh: HELLO)" maxlength="256">HELLO</textarea>
+              </div>
+
+              <!-- Key Input -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="enc-key" class="form-label">Kunci (Key / Keystream)</label>
+                  <span class="form-hint" id="enc-key-counter">5 karakter</span>
+                </div>
+                <div class="input-with-action">
+                  <input type="text" id="enc-key" class="form-input" placeholder="Masukkan kunci rahasia (contoh: ABCDE)" value="ABCDE" maxlength="256">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-random-key" title="Buat kunci acak dengan crypto.getRandomValues">Acak kunci</button>
+                </div>
+                <small style="font-size: 11px; color: var(--color-bone-gray); display: block; margin-top: 4px;">
+                  Demo: karakter dibatasi ASCII printable agar mudah diketik. OTP sungguhan memakai byte acak penuh.
+                </small>
+              </div>
+
+              <!-- Action Button -->
+              <div style="margin-top: var(--space-20);">
+                <button type="button" class="btn btn-primary" id="btn-encrypt" style="width: 100%;">
+                  Enkripsi Pesan &rarr;
+                </button>
+              </div>
+
+              <!-- Alert Box -->
+              <div id="enc-alert" class="alert-box hidden" role="alert" aria-live="polite"></div>
+
+              <!-- Output Box -->
+              <div id="enc-output-card" class="output-card hidden">
+                <div class="output-header">
+                  <span class="eyebrow" style="margin:0;">CIPHERTEXT (HEXADESIMAL)</span>
+                  <div style="display: flex; gap: var(--space-8);">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-cipher">Salin</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-send-to-decrypt">Kirim ke Dekripsi &darr;</button>
+                  </div>
+                </div>
+                <div class="output-val" id="enc-output-val">-</div>
+                <div class="output-metrics">
+                  <div class="metric-item">Panjang pesan: <span id="metric-msg-len">0</span></div>
+                  <div class="metric-item">Panjang key: <span id="metric-key-len">0</span></div>
+                  <div class="metric-item">Keystream: <span id="metric-ks-len">0</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION DEKRIPSI -->
+        <section id="dekripsi" aria-labelledby="heading-dekripsi">
+          <div class="terminal-panel">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <span class="terminal-title">dekripsi.session</span>
+              <span class="eyebrow" style="margin:0; font-size:10px;">02 · DEKRIPSI</span>
+            </div>
+            <div class="terminal-body">
+              <h2 id="heading-dekripsi" class="heading-sm" style="margin-bottom: var(--space-12);">Dekripsi Ciphertext</h2>
+              <p style="font-size: 14px; color: var(--color-pale-stone); margin-bottom: var(--space-20);">
+                Kembalikan hex menjadi teks asli menggunakan kunci dan operasi XOR yang sama.
+              </p>
+
+              <!-- Mode Toggle -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <span class="form-label">Mode Operasi</span>
+                </div>
+                <div class="segmented-toggle" role="radiogroup" aria-label="Mode Operasi Dekripsi">
+                  <button type="button" class="toggle-option active" id="dec-mode-stream" role="radio" aria-checked="true">Stream Cipher</button>
+                  <button type="button" class="toggle-option" id="dec-mode-otp" role="radio" aria-checked="false">One-Time Pad</button>
+                </div>
+              </div>
+
+              <!-- Ciphertext Input -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="dec-ciphertext" class="form-label">Ciphertext (Hexadesimal)</label>
+                  <span class="form-hint" id="dec-cipher-counter">Format: 08 0A 1D 16</span>
+                </div>
+                <textarea id="dec-ciphertext" class="form-textarea" placeholder="Contoh: 09 07 0F 08 0A atau 09070f080a"></textarea>
+              </div>
+
+              <!-- Key Input -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="dec-key" class="form-label">Kunci (Key / Keystream)</label>
+                  <span class="form-hint" id="dec-key-counter">5 karakter</span>
+                </div>
+                <input type="text" id="dec-key" class="form-input" placeholder="Masukkan kunci yang sama" value="ABCDE" maxlength="256">
+              </div>
+
+              <!-- Action Button -->
+              <div style="margin-top: var(--space-20);">
+                <button type="button" class="btn btn-primary" id="btn-decrypt" style="width: 100%;">
+                  Dekripsi Pesan &rarr;
+                </button>
+              </div>
+
+              <!-- Alert Box -->
+              <div id="dec-alert" class="alert-box hidden" role="alert" aria-live="polite"></div>
+
+              <!-- Output Box -->
+              <div id="dec-output-card" class="output-card hidden">
+                <div class="output-header">
+                  <span class="eyebrow" style="margin:0;">HASIL DEKRIPSI (PLAINTEXT)</span>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-plain">Salin</button>
+                </div>
+                <div class="output-val" id="dec-output-val" style="color: var(--color-warm-off-white);">-</div>
+                <div class="output-metrics">
+                  <div class="metric-item">Status: <span id="dec-status-note">Dekripsi = XOR ulang dengan keystream yang sama.</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- 5. Bagian Visualisasi Langkah Algoritma -->
+    <section id="visualisasi" class="band-alt section-padding" aria-labelledby="heading-visualisasi">
+      <div class="container">
+        <span class="eyebrow">03 · VISUALISASI LANGKAH</span>
+        <h2 id="heading-visualisasi" class="heading-lg">Visualisasi Operasi XOR Per Karakter &amp; Bit</h2>
+        <p class="section-desc">
+          Setiap karakter diubah menjadi byte biner 8-bit. Operasi XOR bekerja secara independen pada setiap posisi bit (1 jika kedua bit berbeda, 0 jika sama).
+        </p>
+
+        <!-- Diagram Alur Terminal -->
+        <div class="flow-diagram-container" aria-label="Diagram Alur XOR">
+<pre>
+Plaintext  ─┐
+            ├─▶  <span class="accent">XOR</span>  ─▶  Ciphertext (Hex)
+Keystream  ─┘
+
+Ciphertext ─┐
+            ├─▶  <span class="accent">XOR</span>  ─▶  Plaintext
+Keystream  ─┘   <span class="tag">(keystream yang SAMA &mdash; operasi simetris)</span>
+</pre>
+        </div>
+
+        <!-- Terminal Panel untuk Tabel Langkah -->
+        <div class="terminal-panel">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="terminal-title">bitwise_inspector.step</span>
+            <span id="vis-source-label" class="eyebrow" style="margin:0; font-size:10px;">Sumber: Enkripsi</span>
+          </div>
+          <div class="terminal-body">
+            
+            <!-- Controls Visualisasi -->
+            <div class="vis-controls">
+              <span style="font-size: 13px; color: var(--color-pale-stone);" id="vis-step-summary">
+                Menampilkan 5 langkah karakter
+              </span>
+              <div class="vis-btn-group">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-vis-animate">Animasikan</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-vis-next">Langkah berikutnya</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-vis-all">Tampilkan semua</button>
+              </div>
+            </div>
+
+            <!-- Tabel Langkah -->
+            <div class="table-scroll-container">
+              <table class="data-table" id="vis-steps-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Input</th>
+                    <th>ASCII</th>
+                    <th>Biner Input</th>
+                    <th>Key</th>
+                    <th>Biner Key</th>
+                    <th>Hasil XOR (Biner)</th>
+                    <th>Hex</th>
+                  </tr>
+                </thead>
+                <tbody id="vis-steps-tbody">
+                  <!-- Diisi dinamis lewat JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Panel "Kenapa XOR bisa dibalik?" -->
+            <div class="math-truth-panel">
+              <h3 style="font-size: 15px; font-weight: 500; color: var(--color-gold-leaf); margin-bottom: var(--space-8);">
+                Kenapa XOR bisa dibalik secara sempurna?
+              </h3>
+              <p style="font-size: 13px; color: var(--color-pale-stone); line-height: 1.5;">
+                XOR adalah operasi invers bagi dirinya sendiri (<em>self-inverse</em>). Jika suatu nilai di-XOR dua kali dengan kunci yang sama, nilainya kembali ke awal: <code>(P &oplus; K) &oplus; K = P &oplus; (K &oplus; K) = P &oplus; 0 = P</code>.
+              </p>
+
+              <div class="math-grid">
+                <div class="math-box">
+                  <h4>Tabel Kebenaran XOR (Bitwise)</h4>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
+                    <thead>
+                      <tr style="border-bottom: 1px solid var(--color-iron-veil); color: var(--color-bone-gray);">
+                        <th style="padding: 4px;">Bit A</th>
+                        <th style="padding: 4px;">Bit B</th>
+                        <th style="padding: 4px;">A &oplus; B</th>
+                        <th style="padding: 4px;">Keterangan</th>
+                      </tr>
+                    </thead>
+                    <tbody style="text-align: center;">
+                      <tr><td style="padding:4px;">0</td><td style="padding:4px;">0</td><td style="padding:4px;" class="bit-0">0</td><td style="color:var(--color-bone-gray);">Sama &rarr; 0</td></tr>
+                      <tr><td style="padding:4px;">0</td><td style="padding:4px;">1</td><td style="padding:4px;" class="bit-1">1</td><td style="color:var(--color-gold-leaf);">Beda &rarr; 1</td></tr>
+                      <tr><td style="padding:4px;">1</td><td style="padding:4px;">0</td><td style="padding:4px;" class="bit-1">1</td><td style="color:var(--color-gold-leaf);">Beda &rarr; 1</td></tr>
+                      <tr><td style="padding:4px;">1</td><td style="padding:4px;">1</td><td style="padding:4px;" class="bit-0">0</td><td style="color:var(--color-bone-gray);">Sama &rarr; 0</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="math-box">
+                  <h4>Sifat Matematis Kunci</h4>
+                  <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                    <li><strong style="color: var(--color-muted-cobalt);">Komutatif:</strong> A &oplus; B = B &oplus; A</li>
+                    <li><strong style="color: var(--color-muted-cobalt);">Asosiatif:</strong> (A &oplus; B) &oplus; C = A &oplus; (B &oplus; C)</li>
+                    <li><strong style="color: var(--color-muted-cobalt);">Identitas:</strong> A &oplus; 0 = A</li>
+                    <li><strong style="color: var(--color-muted-cobalt);">Invers Diri:</strong> A &oplus; A = 0</li>
+                    <li><strong style="color: var(--color-gold-leaf);">Pembalikan:</strong> (P &oplus; K) &oplus; K = P &oplus; 0 = P</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 6. Bagian Test Cases -->
+    <section id="tests" class="section-padding" aria-labelledby="heading-tests">
+      <div class="container">
+        <span class="eyebrow">04 · VERIFIKASI TUGAS</span>
+        <h2 id="heading-tests" class="heading-lg">Test Cases &amp; Verifikasi Otomatis</h2>
+        <p class="section-desc">
+          Pengujian komprehensif 9 skenario independen menggunakan fungsi asli <code>encrypt</code> dan <code>decrypt</code> yang sama persis dengan tombol UI. Seluruh output yang diharapkan di-hardcode sebagai literal string.
+        </p>
+
+        <!-- Alur Verifikasi Banner -->
+        <div class="test-flow-banner">
+          Alur Uji: Input &rarr; Algoritma &rarr; Output Anda &rarr; Output yang Diharapkan &rarr; PASS / FAIL
+        </div>
+
+        <!-- Summary Bar -->
+        <div class="test-summary-bar">
+          <div class="test-badge-score" id="test-summary-score">
+            Memuat pengujian...
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-run-all-tests">
+            Jalankan Ulang Semua Tes
+          </button>
+        </div>
+
+        <!-- Tabel Test Cases -->
+        <div class="terminal-panel" style="margin-bottom: var(--space-32);">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="terminal-title">test_suite_runner.log</span>
+            <span class="eyebrow" style="margin:0; font-size:10px;">9 SKENARIO</span>
+          </div>
+          <div class="table-scroll-container">
+            <table class="data-table" id="test-cases-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">#</th>
+                  <th>Deskripsi</th>
+                  <th>Operasi &amp; Mode</th>
+                  <th>Input (Teks / Key)</th>
+                  <th>Output Anda</th>
+                  <th>Output Diharapkan</th>
+                  <th style="width: 90px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="test-cases-tbody">
+                <!-- Diisi otomatis oleh JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Form Tambah Test Case Sendiri (Demo Presentasi) -->
+        <div class="terminal-panel">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="terminal-title">custom_test_creator.sh</span>
+            <span class="eyebrow" style="margin:0; font-size:10px;">OPSIONAL · DEMO KELAS</span>
+          </div>
+          <div class="terminal-body">
+            <h3 style="font-size: 15px; font-weight: 500; margin-bottom: var(--space-12);">Coba Test Case Sendiri</h3>
+            <div class="cipher-grid" style="gap: var(--space-16);">
+              <div class="form-group" style="margin:0;">
+                <label for="custom-test-op" class="form-label">Operasi</label>
+                <select id="custom-test-op" class="form-input" style="padding: 8px 12px; font-size: 13px;">
+                  <option value="encrypt">Enkripsi</option>
+                  <option value="decrypt">Dekripsi</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label for="custom-test-mode" class="form-label">Mode</label>
+                <select id="custom-test-mode" class="form-input" style="padding: 8px 12px; font-size: 13px;">
+                  <option value="stream">Stream Cipher</option>
+                  <option value="otp">One-Time Pad</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label for="custom-test-input" class="form-label">Input Teks / Cipher</label>
+                <input type="text" id="custom-test-input" class="form-input" placeholder="Contoh: SECRET" style="padding: 8px 12px; font-size: 13px;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label for="custom-test-key" class="form-label">Kunci</label>
+                <input type="text" id="custom-test-key" class="form-input" placeholder="Contoh: PASS" style="padding: 8px 12px; font-size: 13px;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: var(--space-12);">
+              <label for="custom-test-expected" class="form-label">Output yang Diharapkan (Literal)</label>
+              <input type="text" id="custom-test-expected" class="form-input" placeholder="Masukkan output yang Anda harapkan secara manual" style="padding: 8px 12px; font-size: 13px;">
+            </div>
+            <div style="display: flex; gap: var(--space-12); align-items: center; margin-top: var(--space-16);">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-run-custom-test">Jalankan Custom Test</button>
+              <span id="custom-test-result" style="font-family: var(--font-mono); font-size: 13px;"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 7. Bagian Serangan Key Reuse (Two-Time Pad) -->
+    <section id="serangan" class="band-alt section-padding" aria-labelledby="heading-serangan">
+      <div class="container">
+        <span class="eyebrow">05 · ANALISIS KEAMANAN</span>
+        <h2 id="heading-serangan" class="heading-lg">Serangan Key Reuse (Two-Time Pad)</h2>
+        <p class="section-desc">
+          Membuktikan mengapa menggunakan kunci atau keystream yang sama untuk lebih dari satu pesan berakibat fatal. Kunci lenyap sepenuhnya dari persamaan matematika, menyisakan hubungan langsung antar kedua pesan rahasia.
+        </p>
+
+        <!-- Panel Form Input Serangan -->
+        <div class="terminal-panel" style="margin-bottom: var(--space-24);">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="terminal-title">two_time_pad_lab.sh</span>
+            <span class="eyebrow" style="margin:0; font-size:10px;">SIMULASI SADAPAN</span>
+          </div>
+          <div class="terminal-body">
+            <div class="cipher-grid">
+              <div class="form-group">
+                <label for="attack-m1" class="form-label">Pesan 1 (M1)</label>
+                <input type="text" id="attack-m1" class="form-input" value="SERANG DI FAJAR" maxlength="256">
+              </div>
+              <div class="form-group">
+                <label for="attack-m2" class="form-label">Pesan 2 (M2)</label>
+                <input type="text" id="attack-m2" class="form-input" value="MUNDUR DI SENJA" maxlength="256">
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="attack-key" class="form-label">Kunci Bersama (Key Reuse)</label>
+                <span class="form-hint">Satu kunci dipakai untuk M1 dan M2</span>
+              </div>
+              <div class="input-with-action">
+                <input type="text" id="attack-key" class="form-input" value="kunci-rahasia-01" maxlength="256">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-attack-random-key">Acak Kunci</button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: var(--space-12); flex-wrap: wrap; margin-top: var(--space-20);">
+              <button type="button" class="btn btn-primary" id="btn-run-attack">Analisis Penyadapan &rarr;</button>
+              <button type="button" class="btn btn-secondary" id="btn-toggle-diff-key">
+                Pakai 2 Kunci Berbeda (OTP yang Benar)
+              </button>
+            </div>
+
+            <div id="attack-alert" class="alert-box hidden" role="alert" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- Hasil Analisis Bertahap (P0 Wajib) -->
+        <div id="attack-results-container">
+          <!-- Step 1 & 2 -->
+          <div class="attack-step-card">
+            <div class="attack-step-title">
+              <span>Langkah 1 &amp; 2: Enkripsi dengan Kunci yang Sama</span>
+              <span class="eyebrow" style="margin:0;">HASIL SADAPAN</span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 13px; line-height: 1.8;">
+              <p><span style="color: var(--color-muted-cobalt);">C1 = M1 &oplus; K :</span> <span id="attack-c1-hex" style="color: var(--color-gold-leaf);">-</span></p>
+              <p><span style="color: var(--color-muted-cobalt);">C2 = M2 &oplus; K :</span> <span id="attack-c2-hex" style="color: var(--color-gold-leaf);">-</span></p>
+            </div>
+          </div>
+
+          <!-- Step 3 & 4: Bukti Identik -->
+          <div class="attack-step-card">
+            <div class="attack-step-title">
+              <span>Langkah 3 &amp; 4: Eliminasi Kunci (C1 &oplus; C2)</span>
+              <span class="eyebrow" style="margin:0;">BUKTI MATEMATIS</span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 13px; line-height: 1.8;">
+              <p><span style="color: var(--color-muted-cobalt);">Hitungan Penyerang (C1 &oplus; C2) :</span> <span id="attack-c1xc2-hex" style="color: var(--color-warm-off-white); font-weight: 500;">-</span></p>
+              <p><span style="color: var(--color-bone-gray);">Bukti Teoretis     (M1 &oplus; M2) :</span> <span id="attack-m1xm2-hex" style="color: var(--color-bone-gray);">-</span></p>
+            </div>
+
+            <!-- Verification Indicator -->
+            <div class="attack-verification-box" id="attack-identical-indicator">
+              <span>C1 &oplus; C2 = M1 &oplus; M2</span>
+              <span style="color: var(--color-status-pass); font-weight: 600;">&#10003; IDENTIK &mdash; KUNCI HILANG SEPENUHNYA</span>
+            </div>
+
+            <p style="font-size: 13px; color: var(--color-pale-stone); line-height: 1.5; margin-top: 8px;">
+              Karena <code>(M1 &oplus; K) &oplus; (M2 &oplus; K) = M1 &oplus; M2 &oplus; (K &oplus; K) = M1 &oplus; M2 &oplus; 0 = M1 &oplus; M2</code>, penyerang tidak memerlukan kunci sama sekali untuk mempelajari selisih kedua pesan.
+            </p>
+          </div>
+
+          <!-- Step 5: Byte 00 Leakage Highlight -->
+          <div class="attack-step-card">
+            <div class="attack-step-title">
+              <span>Langkah 5: Kebocoran Karakter Identik (Byte 00)</span>
+              <span class="eyebrow" style="margin:0;">ANALISIS POSISI</span>
+            </div>
+            <p style="font-size: 13px; color: var(--color-pale-stone); margin-bottom: var(--space-12);">
+              Ketika kedua pesan memiliki karakter yang sama pada posisi tertentu, hasil XOR bernilai <code>00</code>. Ini membocorkan bahwa kedua pesan identik pada posisi tersebut:
+            </p>
+            <div class="table-scroll-container">
+              <table class="data-table" id="attack-byte-table">
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>M1 Char</th>
+                    <th>M2 Char</th>
+                    <th>C1 Hex</th>
+                    <th>C2 Hex</th>
+                    <th>C1 &oplus; C2 (Hex)</th>
+                    <th>Biner XOR</th>
+                    <th>Status Kebocoran</th>
+                  </tr>
+                </thead>
+                <tbody id="attack-byte-tbody">
+                  <!-- Diisi dinamis oleh JS -->
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: var(--space-12); font-size: 13px; color: var(--color-status-warn);">
+              &#9888; <em>Byte 00 membocorkan bahwa kedua pesan identik di posisi tersebut.</em>
+            </div>
+          </div>
+
+          <!-- Step 7: Kotak Kesimpulan -->
+          <div class="alert-box alert-warn" style="margin-bottom: var(--space-24);">
+            <strong>Kesimpulan:</strong> Tanpa mengetahui key, penyerang sudah memperoleh hubungan langsung antar dua pesan. Jika satu pesan bisa ditebak, pesan lainnya terbuka.
+          </div>
+
+          <!-- Tambahan P1: Crib Dragging Tool -->
+          <div class="crib-drag-section">
+            <div class="attack-step-title">
+              <span>Metode Pemecahan Lanjutan: Crib Dragging</span>
+              <span class="eyebrow" style="margin:0;">P1 EKSPERIMEN</span>
+            </div>
+            <p style="font-size: 13px; color: var(--color-pale-stone); margin-bottom: var(--space-16);">
+              Penyerang menggeser tebakan kata (<em>crib</em>) di sepanjang <code>C1 &oplus; C2</code>. Jika hasil XOR menghasilkan karakter ASCII yang masuk akal (printable), kata tebakan kemungkinan besar berada di posisi tersebut.
+            </p>
+            <div class="input-with-action" style="margin-bottom: var(--space-16);">
+              <input type="text" id="crib-input" class="form-input" placeholder="Tebakan kata di Pesan 1 (contoh: SERANG)" value="SERANG">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-drag-crib">Geser Tebakan (Drag)</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-reveal-full-m2">Jika M1 Diketahui Penuh &rarr;</button>
+            </div>
+
+            <!-- Tabel Hasil Crib Dragging -->
+            <div class="table-scroll-container">
+              <table class="data-table" id="crib-results-table">
+                <thead>
+                  <tr>
+                    <th>Posisi Awal</th>
+                    <th>Tebakan (Crib)</th>
+                    <th>Fragmen Pesan Lawan</th>
+                    <th>Hex Fragmen</th>
+                    <th>Keterbacaan</th>
+                  </tr>
+                </thead>
+                <tbody id="crib-results-tbody">
+                  <!-- Diisi dinamis -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Hasil Pemulihan Utuh M2 jika M1 diketahui penuh -->
+            <div id="full-m2-card" class="output-card hidden" style="margin-top: var(--space-16);">
+              <div class="output-header">
+                <span class="eyebrow" style="margin:0;">PEMULIHAN PENUH: M2 = C1 &oplus; C2 &oplus; M1</span>
+              </div>
+              <div class="output-val" id="full-m2-val" style="color: var(--color-status-pass);">-</div>
+              <p style="font-size: 12px; color: var(--color-bone-gray); margin-top: 8px;">
+                Pesan 2 terbaca utuh tanpa penyerang pernah mengetahui kunci rahasia!
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 8. Bagian Syarat OTP & Pemeriksa Interaktif -->
+    <section id="otp" class="section-padding" aria-labelledby="heading-otp">
+      <div class="container">
+        <span class="eyebrow">06 · STANDAR TEORITIS</span>
+        <h2 id="heading-otp" class="heading-lg">4 Syarat Mutlak One-Time Pad (OTP)</h2>
+        <p class="section-desc">
+          One-Time Pad adalah satu-satunya metode enkripsi yang terbukti matematis memiliki <em>kerahasiaan sempurna (perfect secrecy)</em> menurut Claude Shannon, dengan syarat seluruh kondisi berikut terpenuhi tanpa kompromi.
+        </p>
+
+        <!-- 4 Syarat Daftar Vertikal -->
+        <div class="otp-list">
+          <!-- Syarat 1 -->
+          <div class="otp-item">
+            <svg class="otp-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <div class="otp-item-content">
+              <h3>1. Key Benar-benar Acak (True Random)</h3>
+              <p>Key harus dibuat dari sumber entropi acak sejati; pola atau bias sedikit saja pada kunci membuka celah analisis statistik frekuensi.</p>
+            </div>
+          </div>
+
+          <!-- Syarat 2 -->
+          <div class="otp-item">
+            <svg class="otp-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <div class="otp-item-content">
+              <h3>2. Key Minimal Sepanjang Pesan</h3>
+              <p>Key yang lebih pendek dari pesan harus diulang secara siklik, menghasilkan keystream yang berpola dan bukan lagi One-Time Pad.</p>
+            </div>
+          </div>
+
+          <!-- Syarat 3 -->
+          <div class="otp-item">
+            <svg class="otp-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <div class="otp-item-content">
+              <h3>3. Key Wajib Dirahasiakan</h3>
+              <p>Keamanan matematis OTP bergantung sepenuhnya pada kerahasiaan kunci antara pihak pengirim dan penerima.</p>
+            </div>
+          </div>
+
+          <!-- Syarat 4 -->
+          <div class="otp-item">
+            <svg class="otp-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            <div class="otp-item-content">
+              <h3>4. Key Tidak Pernah Dipakai Ulang (One-Time)</h3>
+              <p>Penggunaan ulang kunci untuk lebih dari satu pesan melahirkan serangan Two-Time Pad yang membatalkan seluruh keamanan cipher.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pemeriksa OTP Interaktif (P1) -->
+        <div class="otp-checker-panel">
+          <div class="attack-step-title">
+            <span>Pemeriksa Kepatuhan OTP (Live Inspector)</span>
+            <span class="eyebrow" style="margin:0;">STATUS FORM ENKRIPSI</span>
+          </div>
+          <p style="font-size: 13px; color: var(--color-pale-stone);">
+            Memeriksa kepatuhan konfigurasi yang sedang aktif di bagian formulir Enkripsi secara real-time:
+          </p>
+
+          <table class="checker-table">
+            <thead>
+              <tr>
+                <th>Syarat OTP</th>
+                <th>Status Kepatuhan</th>
+                <th>Keterangan Sistem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Panjang Kunci &ge; Pesan</strong></td>
+                <td id="otp-check-len" style="font-family: var(--font-mono);">-</td>
+                <td id="otp-note-len" style="color: var(--color-pale-stone); font-size: 13px;">-</td>
+              </tr>
+              <tr>
+                <td><strong>2. Kunci Acak</strong></td>
+                <td id="otp-check-rnd" style="font-family: var(--font-mono);">-</td>
+                <td id="otp-note-rnd" style="color: var(--color-pale-stone); font-size: 13px;">-</td>
+              </tr>
+              <tr>
+                <td><strong>3. Kerahasiaan Kunci</strong></td>
+                <td style="font-family: var(--font-mono); color: var(--color-status-warn);">&#9888; Pengingat</td>
+                <td style="color: var(--color-pale-stone); font-size: 13px;">Tidak dapat diverifikasi oleh aplikasi secara otomatis. Pastikan saluran distribusi kunci aman.</td>
+              </tr>
+              <tr>
+                <td><strong>4. Kunci Belum Pernah Dipakai</strong></td>
+                <td id="otp-check-reuse" style="font-family: var(--font-mono);">-</td>
+                <td id="otp-note-reuse" style="color: var(--color-pale-stone); font-size: 13px;">-</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top: var(--space-20); padding-top: var(--space-16); border-top: 1px solid var(--color-iron-veil); font-size: 13px; color: var(--color-pale-stone); line-height: 1.5;">
+            <strong>Catatan Teoretis:</strong> OTP yang memenuhi keempat syarat di atas bersifat aman secara mutlak (<em>perfect secrecy</em>, Shannon 1949) bahkan terhadap komputer dengan daya komputasi tak terbatas. Namun, dalam praktik nyata OTP jarang digunakan karena sulitnya mendistribusikan kunci acak yang ukurannya sama panjang dengan pesan rahasia secara aman.
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- 9. Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>Tentang Proyek</h4>
+          <p>
+            Aplikasi web interaktif mini-proyek Kriptografi untuk demonstrasi dan visualisasi konsep XOR Stream Cipher, One-Time Pad, serta kelemahan serangan Two-Time Pad.
+          </p>
+        </div>
+        <div class="footer-col">
+          <h4>Kelompok &amp; Anggota</h4>
+          <p>
+            <strong>Tim Presentasi KKI</strong><br>
+            Mata Kuliah: Kriptografi &amp; Keamanan Informasi<br>
+            Fakultas Ilmu Komputer
+          </p>
+        </div>
+        <div class="footer-col">
+          <h4>Spesifikasi Teknis</h4>
+          <p>
+            Murni Vanilla HTML5, CSS3, &amp; JavaScript ES2020 tanpa library pihak ketiga. Dapat dijalankan langsung offline via protokol <code>file://</code>.
+          </p>
+        </div>
+      </div>
+      <div class="footer-disclaimer">
+        Hanya untuk tujuan edukasi. Jangan gunakan implementasi ini untuk mengamankan data rahasia nyata.
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
