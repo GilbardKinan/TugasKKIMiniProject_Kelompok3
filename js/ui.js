@@ -35,8 +35,6 @@
     isKeyRandomGenerated: false, // Flag pelacak apakah kunci dibuat via tombol acak
     usedKeysMap: new Map(), // Menyimpan key -> Set(plaintext) dalam sesi untuk cek reuse
     currentSteps: [],       // Langkah visualisasi aktif
-    stepAnimationTimer: null,
-    currentStepIndex: 0,
     attackData: null,       // Data hasil analisis serangan terakhir
   };
 
@@ -78,7 +76,6 @@
     visSourceLabel: document.getElementById('vis-source-label'),
     visStepSummary: document.getElementById('vis-step-summary'),
     visStepsTbody: document.getElementById('vis-steps-tbody'),
-    btnVisAnimate: document.getElementById('btn-vis-animate'),
     btnVisNext: document.getElementById('btn-vis-next'),
     btnVisAll: document.getElementById('btn-vis-all'),
 
@@ -386,21 +383,40 @@
     return container;
   }
 
-  function renderVisualizationSteps(steps) {
-    if (!steps || !steps.length) return;
-    state.currentSteps = steps;
-    state.currentStepIndex = steps.length; // Default tampilkan semua
-    clearInterval(state.stepAnimationTimer);
-
-    if (dom.visStepSummary) {
-      dom.visStepSummary.textContent = `Menampilkan ${steps.length} langkah karakter`;
+  function updateVisSummary(currentCount, totalCount) {
+    if (!dom.visStepSummary) return;
+    if (!totalCount) {
+      dom.visStepSummary.textContent = 'Tidak ada langkah untuk ditampilkan';
+    } else if (totalCount === 1) {
+      dom.visStepSummary.textContent = 'Menampilkan 1 langkah karakter';
+    } else if (currentCount >= totalCount) {
+      dom.visStepSummary.textContent = `Menampilkan semua (${totalCount} langkah karakter)`;
+    } else {
+      dom.visStepSummary.textContent = `Menampilkan langkah ${currentCount} dari ${totalCount} karakter`;
     }
+  }
+
+  function renderVisualizationSteps(steps) {
+    if (!steps || !steps.length) {
+      dom.visStepsTbody.innerHTML = '';
+      updateVisSummary(0, 0);
+      return;
+    }
+    state.currentSteps = steps;
 
     dom.visStepsTbody.innerHTML = '';
 
-    steps.forEach((st) => {
+    steps.forEach((st, idx) => {
       const tr = document.createElement('tr');
       tr.className = 'step-row';
+
+      // Langkah pertama langsung ditampilkan, langkah berikutnya disembunyikan untuk inspeksi manual step-by-step
+      if (idx === 0) {
+        tr.style.display = '';
+        tr.classList.add('step-highlight');
+      } else {
+        tr.style.display = 'none';
+      }
 
       // 1. Index
       const tdIdx = document.createElement('td');
@@ -447,60 +463,79 @@
 
       dom.visStepsTbody.appendChild(tr);
     });
-  }
 
-  function startStepAnimation() {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
-      showAllSteps();
-      return;
+    updateVisSummary(1, steps.length);
+
+    if (dom.btnVisNext) {
+      dom.btnVisNext.textContent = 'Langkah berikutnya';
     }
-
-    clearInterval(state.stepAnimationTimer);
-    const rows = dom.visStepsTbody.querySelectorAll('tr');
-    if (!rows.length) return;
-
-    // Sembunyikan semua baris terlebih dahulu
-    rows.forEach(r => { r.style.display = 'none'; r.classList.remove('step-highlight'); });
-
-    let current = 0;
-    state.stepAnimationTimer = setInterval(() => {
-      if (current < rows.length) {
-        rows[current].style.display = '';
-        rows[current].classList.add('step-highlight');
-        if (current > 0) {
-          rows[current - 1].classList.remove('step-highlight');
-        }
-        current++;
-      } else {
-        clearInterval(state.stepAnimationTimer);
-        if (rows.length > 0) {
-          rows[rows.length - 1].classList.remove('step-highlight');
-        }
-      }
-    }, 380);
   }
 
   function nextStepManual() {
-    clearInterval(state.stepAnimationTimer);
     const rows = dom.visStepsTbody.querySelectorAll('tr');
+    if (!rows.length) return;
+
+    // Cari baris pertama yang masih tersembunyi
+    let nextIndex = -1;
     for (let i = 0; i < rows.length; i++) {
       if (rows[i].style.display === 'none') {
-        rows[i].style.display = '';
-        rows[i].classList.add('step-highlight');
-        if (i > 0) rows[i - 1].classList.remove('step-highlight');
-        return;
+        nextIndex = i;
+        break;
+      }
+    }
+
+    if (nextIndex !== -1) {
+      // Tampilkan baris berikutnya
+      rows.forEach(r => r.classList.remove('step-highlight'));
+      rows[nextIndex].style.display = '';
+      rows[nextIndex].classList.add('step-highlight');
+      rows[nextIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+      const isNowAllShown = (nextIndex === rows.length - 1);
+      updateVisSummary(nextIndex + 1, rows.length);
+
+      if (dom.btnVisNext) {
+        dom.btnVisNext.textContent = isNowAllShown ? 'Ulangi dari awal' : 'Langkah berikutnya';
+      }
+    } else {
+      // Jika semua sudah tampil, klik berikutnya akan mengulang dari langkah 1
+      rows.forEach((r, idx) => {
+        if (idx === 0) {
+          r.style.display = '';
+          r.classList.add('step-highlight');
+        } else {
+          r.style.display = 'none';
+          r.classList.remove('step-highlight');
+        }
+      });
+
+      const scrollContainer = dom.visStepsTbody.closest('.table-scroll-container');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+      }
+
+      updateVisSummary(1, rows.length);
+
+      if (dom.btnVisNext) {
+        dom.btnVisNext.textContent = 'Langkah berikutnya';
       }
     }
   }
 
   function showAllSteps() {
-    clearInterval(state.stepAnimationTimer);
     const rows = dom.visStepsTbody.querySelectorAll('tr');
+    if (!rows.length) return;
+
     rows.forEach(r => {
       r.style.display = '';
       r.classList.remove('step-highlight');
     });
+
+    updateVisSummary(rows.length, rows.length);
+
+    if (dom.btnVisNext) {
+      dom.btnVisNext.textContent = rows.length > 1 ? 'Ulangi dari awal' : 'Langkah berikutnya';
+    }
   }
 
   // =========================================================================
@@ -885,9 +920,8 @@
     dom.btnCopyPlain.addEventListener('click', () => copyToClipboard(dom.decOutputVal.textContent, dom.btnCopyPlain));
 
     // Visualisasi
-    dom.btnVisAnimate.addEventListener('click', startStepAnimation);
-    dom.btnVisNext.addEventListener('click', nextStepManual);
-    dom.btnVisAll.addEventListener('click', showAllSteps);
+    if (dom.btnVisNext) dom.btnVisNext.addEventListener('click', nextStepManual);
+    if (dom.btnVisAll) dom.btnVisAll.addEventListener('click', showAllSteps);
 
     // Tests
     dom.btnRunAllTests.addEventListener('click', runAndRenderTests);

@@ -627,12 +627,24 @@ a {
   color: var(--color-warm-off-white);
 }
 
+@keyframes stepRowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .data-table tr.step-row {
-  transition: opacity 0.3s ease, background-color 0.3s ease;
+  animation: stepRowFadeIn 0.2s ease-out;
+  transition: background-color 0.25s ease;
 }
 
 .data-table tr.step-highlight {
-  background-color: rgba(189, 159, 101, 0.08);
+  background-color: rgba(189, 159, 101, 0.16);
 }
 
 /* Pewarnaan Bit Biner */
