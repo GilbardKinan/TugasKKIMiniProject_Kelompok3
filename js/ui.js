@@ -893,59 +893,72 @@
 
   function initEventListeners() {
     // Enkripsi
-    dom.encPlain.addEventListener('input', () => {
-      updateEncCounters();
-      hideAlert(dom.encAlert);
-    });
+    if (dom.encPlain) {
+      dom.encPlain.addEventListener('input', () => {
+        updateEncCounters();
+        hideAlert(dom.encAlert);
+      });
+    }
 
-    dom.encKey.addEventListener('input', () => {
-      state.isKeyRandomGenerated = false; // Kunci diubah manual
-      updateEncCounters();
-      hideAlert(dom.encAlert);
-    });
+    if (dom.encKey) {
+      dom.encKey.addEventListener('input', () => {
+        state.isKeyRandomGenerated = false; // Kunci diubah manual
+        updateEncCounters();
+        hideAlert(dom.encAlert);
+      });
+    }
 
-    dom.encModeStream.addEventListener('click', () => setEncMode('stream'));
-    dom.encModeOtp.addEventListener('click', () => setEncMode('otp'));
-    dom.btnRandomKey.addEventListener('click', handleRandomKey);
-    dom.btnEncrypt.addEventListener('click', handleEncrypt);
-    dom.btnCopyCipher.addEventListener('click', () => copyToClipboard(dom.encOutputVal.textContent, dom.btnCopyCipher));
-    dom.btnSendToDecrypt.addEventListener('click', handleSendToDecrypt);
+    if (dom.encModeStream) dom.encModeStream.addEventListener('click', () => setEncMode('stream'));
+    if (dom.encModeOtp) dom.encModeOtp.addEventListener('click', () => setEncMode('otp'));
+    if (dom.btnRandomKey) dom.btnRandomKey.addEventListener('click', handleRandomKey);
+    if (dom.btnEncrypt) dom.btnEncrypt.addEventListener('click', handleEncrypt);
+    if (dom.btnCopyCipher) dom.btnCopyCipher.addEventListener('click', () => copyToClipboard(dom.encOutputVal ? dom.encOutputVal.textContent : '', dom.btnCopyCipher));
+    if (dom.btnSendToDecrypt) dom.btnSendToDecrypt.addEventListener('click', handleSendToDecrypt);
 
     // Dekripsi
-    dom.decCipher.addEventListener('input', () => hideAlert(dom.decAlert));
-    dom.decKey.addEventListener('input', () => hideAlert(dom.decAlert));
-    dom.decModeStream.addEventListener('click', () => setDecMode('stream'));
-    dom.decModeOtp.addEventListener('click', () => setDecMode('otp'));
-    dom.btnDecrypt.addEventListener('click', handleDecrypt);
-    dom.btnCopyPlain.addEventListener('click', () => copyToClipboard(dom.decOutputVal.textContent, dom.btnCopyPlain));
+    if (dom.decCipher) dom.decCipher.addEventListener('input', () => hideAlert(dom.decAlert));
+    if (dom.decKey) dom.decKey.addEventListener('input', () => hideAlert(dom.decAlert));
+    if (dom.decModeStream) dom.decModeStream.addEventListener('click', () => setDecMode('stream'));
+    if (dom.decModeOtp) dom.decModeOtp.addEventListener('click', () => setDecMode('otp'));
+    if (dom.btnDecrypt) dom.btnDecrypt.addEventListener('click', handleDecrypt);
+    if (dom.btnCopyPlain) dom.btnCopyPlain.addEventListener('click', () => copyToClipboard(dom.decOutputVal ? dom.decOutputVal.textContent : '', dom.btnCopyPlain));
 
     // Visualisasi
     if (dom.btnVisNext) dom.btnVisNext.addEventListener('click', nextStepManual);
     if (dom.btnVisAll) dom.btnVisAll.addEventListener('click', showAllSteps);
 
     // Tests
-    dom.btnRunAllTests.addEventListener('click', runAndRenderTests);
-    dom.btnRunCustomTest.addEventListener('click', handleRunCustomTest);
+    if (dom.btnRunAllTests) dom.btnRunAllTests.addEventListener('click', runAndRenderTests);
+    if (dom.btnRunCustomTest) dom.btnRunCustomTest.addEventListener('click', handleRunCustomTest);
+    if (dom.customTestExpected) {
+      dom.customTestExpected.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleRunCustomTest();
+      });
+    }
 
     // Serangan Key Reuse
-    dom.btnAttackRandomKey.addEventListener('click', () => {
-      const len = Math.max(dom.attackM1.value.length, dom.attackM2.value.length);
-      dom.attackKey.value = cipher.generateRandomKey(len || 15);
-      hideAlert(dom.attackAlert);
-    });
-    dom.btnRunAttack.addEventListener('click', runAttackAnalysis);
-    dom.btnToggleDiffKey.addEventListener('click', handleToggleDifferentKeys);
-    dom.btnDragCrib.addEventListener('click', handleDragCrib);
-    dom.cribInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleDragCrib();
-    });
-    dom.btnRevealFullM2.addEventListener('click', handleRevealFullM2);
+    if (dom.btnAttackRandomKey) {
+      dom.btnAttackRandomKey.addEventListener('click', () => {
+        const len = Math.max((dom.attackM1 ? dom.attackM1.value.length : 0), (dom.attackM2 ? dom.attackM2.value.length : 0));
+        if (dom.attackKey) dom.attackKey.value = cipher.generateRandomKey(len || 15);
+        hideAlert(dom.attackAlert);
+      });
+    }
+    if (dom.btnRunAttack) dom.btnRunAttack.addEventListener('click', runAttackAnalysis);
+    if (dom.btnToggleDiffKey) dom.btnToggleDiffKey.addEventListener('click', handleToggleDifferentKeys);
+    if (dom.btnDragCrib) dom.btnDragCrib.addEventListener('click', handleDragCrib);
+    if (dom.cribInput) {
+      dom.cribInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleDragCrib();
+      });
+    }
+    if (dom.btnRevealFullM2) dom.btnRevealFullM2.addEventListener('click', handleRevealFullM2);
 
     // Smooth Anchor Scroll & Active Spy
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
+        if (targetId === '#' || !targetId) return;
         const targetEl = document.querySelector(targetId);
         if (targetEl) {
           e.preventDefault();
